@@ -1,6 +1,11 @@
 <?php
 function __autoload($className) {
-	include_once($className.".php");
+    if(strstr($className,'Exception')) {
+       include_once(__DIR__. "../server/JsonRpcExceptions.php");
+    }
+    else {
+        include_once($className.".php");
+    }
 }
 class JsonRpcClient {
 	private $_rpcUrl;
@@ -46,35 +51,12 @@ class JsonRpcClient {
 
         $response = curl_exec($curlHandler);
         if(!$response) {
-          throw new Exception('Curl error: ' . curl_error($curlHandler), curl_errno($curlHandler));
+          throw new JsonRpcCurlException($curlHandler);
         }
         curl_close($curlHandler);
         $json_response = json_decode($response);
         if (json_last_error() != JSON_ERROR_NONE) {
-            switch (json_last_error()) {
-                case JSON_ERROR_DEPTH:
-                    $message = 'The maximum stack depth has been exceeded';
-                    break;
-                case JSON_ERROR_STATE_MISMATCH:
-                    $message = 'Invalid or malformed JSON';
-                    break;
-                case JSON_ERROR_CTRL_CHAR:
-                    $message = 'Control character error, possibly incorrectly encoded';
-                    break;
-                case JSON_ERROR_SYNTAX:
-                    $message = 'Syntax error';
-                    break;
-                case JSON_ERROR_UTF8:
-                    $message = 'Malformed UTF-8 characters, possibly incorrectly encoded';
-                    break;
-                default:
-                    $message = "Error decoding JSON string.";
-                    break;
-            }
-            $message .= "\nMethod: " . $rpcBatchArray->method.
-                        "\nParams: " . var_export($rpcBatchArray->params, TRUE).
-                        "\nResponse: " . $response;
-            throw new Exception($message, json_last_error());
+          throw new JsonRpcParseErrorException();
         }
         return $json_response;
 	}

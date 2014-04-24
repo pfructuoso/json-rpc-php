@@ -31,10 +31,10 @@ class JsonRpcServer {
 		}
 	}
 	private function parseRequestJson() {
-		if(!is_null($requestObjects = json_decode($this->_requestText))) {
+		if(!is_null($requestObjects = json_decode($this->_requestText)) && json_last_error() != JSON_ERROR_NONE) {
 			$this->_requestObject = $requestObjects;
 		} else {
-			throw new JsonRpcParseErrorException();
+			throw new JsonRpcParseErrorException("Parse error", -32700);
 		}
 	}
 	private function performCalls() {
